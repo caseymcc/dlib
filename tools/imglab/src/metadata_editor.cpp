@@ -10,11 +10,33 @@
 #include <dlib/array2d.h>
 #include <dlib/pixel.h>
 #include <sstream>
+#include <ctime>
 
 using namespace std;
 using namespace dlib;
 
 extern const char* VERSION;
+
+rgb_alpha_pixel string_to_color(
+    const std::string& str
+)
+{
+    if (str.size() == 0)
+    {
+        return rgb_alpha_pixel(255,0,0,255);
+    }
+    else
+    {
+        // make up a random color based on the string label.
+        hsi_pixel pix;
+        pix.h = static_cast<unsigned char>(dlib::hash(str)&0xFF); 
+        pix.s = 255;
+        pix.i = 150;
+        rgb_alpha_pixel result;
+        assign_pixel(result, pix);
+        return result;
+    }
+}
 
 // ----------------------------------------------------------------------------------------
 
@@ -27,7 +49,9 @@ metadata_editor(
     image_pos(0),
     display(*this),
     overlay_label_name(*this),
-    overlay_label(*this)
+    overlay_label(*this),
+    keyboard_jump_pos(0),
+    last_keyboard_jump_pos_update(0)
 {
     file metadata_file(filename_);
     filename = metadata_file.full_name();
@@ -84,7 +108,6 @@ metadata_editor(
     get_display_size(screen_width, screen_height);
     set_pos((screen_width-width)/2, (screen_height-height)/2);
 
-    set_title("Image Labeler - " + metadata.name);
     show();
 } 
 
@@ -290,6 +313,29 @@ on_keydown (
             overlay_label.select_all_text();
         }
 
+        // If the user types a number then jump to that image.
+        if ('0' <= key && key <= '9' && metadata.images.size() != 0 && !overlay_label.has_input_focus())
+        {
+            time_t curtime = time(0);
+            // If it's been a while since the user typed numbers then forget the last jump
+            // position and start accumulating numbers over again.
+            if (curtime-last_keyboard_jump_pos_update >= 2)
+                keyboard_jump_pos = 0;
+            last_keyboard_jump_pos_update = curtime;
+
+            keyboard_jump_pos *= 10;
+            keyboard_jump_pos += key-'0';
+            if (keyboard_jump_pos >= metadata.images.size())
+                keyboard_jump_pos = metadata.images.size()-1;
+
+            image_pos = keyboard_jump_pos;
+            select_image(image_pos);
+        }
+        else
+        {
+            last_keyboard_jump_pos_update = 0;
+        }
+
         return;
     }
 
@@ -382,7 +428,7 @@ std::vector<dlib::image_display::overlay_rect> get_overlays (
         temp[i].label = data.boxes[i].label;
         temp[i].parts = data.boxes[i].parts;
         temp[i].crossed_out = data.boxes[i].ignore;
-        assign_pixel(temp[i].color, rgb_pixel(255,0,0));
+        temp[i].color = string_to_color(data.boxes[i].label);
     }
     return temp;
 }
@@ -404,7 +450,7 @@ load_image(
     try
     {
         dlib::load_image(img, metadata.images[idx].filename);
-
+        set_title(metadata.name + ": " +metadata.images[idx].filename);
     }
     catch (exception& e)
     {
@@ -432,7 +478,7 @@ load_image_and_set_size(
     try
     {
         dlib::load_image(img, metadata.images[idx].filename);
-
+        set_title(metadata.name + ": " +metadata.images[idx].filename);
     }
     catch (exception& e)
     {
@@ -494,6 +540,7 @@ on_overlay_label_changed(
 )
 {
     display.set_default_overlay_rect_label(trim(overlay_label.text()));
+    display.set_default_overlay_rect_color(string_to_color(trim(overlay_label.text())));
 }
 
 // ----------------------------------------------------------------------------------------
@@ -505,6 +552,7 @@ on_overlay_rect_selected(
 {
     overlay_label.set_text(orect.label);
     display.set_default_overlay_rect_label(orect.label);
+    display.set_default_overlay_rect_color(string_to_color(orect.label));
 }
 
 // ----------------------------------------------------------------------------------------
@@ -536,8 +584,9 @@ display_about(
                         "and drag allows you to navigate around the image.  Holding ctrl and "
                         "left clicking a rectangle will give it the label from the Next Label field. "
                         "Holding shift + right click and then dragging allows you to move things around. "
-                        "Finally, holding ctrl and pressing the up or down keyboard keys will propagate "
-                        "rectangle labels from one image to the next and also skip empty images.",0,0) << endl;
+                        "Holding ctrl and pressing the up or down keyboard keys will propagate "
+                        "rectangle labels from one image to the next and also skip empty images. " 
+                        "Finally, typing a number on the keyboard will jump you to a specific image.",0,0) << endl;
 
     message_box("About Image Labeler",sout.str());
 }

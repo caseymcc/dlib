@@ -1,4 +1,4 @@
-// Copyright (C) 2014  Davis E. King (davis@dlib.net)
+// Copyright (C) 2015 Davis E. King (davis@dlib.net)
 // License: Boost Software License   See LICENSE.txt for the full license.
 
 #include <dlib/python.h>
@@ -6,7 +6,6 @@
 #include <boost/python/args.hpp>
 #include <dlib/geometry.h>
 #include <dlib/image_processing/frontal_face_detector.h>
-#include "indexing.h"
 #include "simple_object_detector.h"
 #include "simple_object_detector_py.h"
 #include "conversion.h"
@@ -21,29 +20,6 @@ string print_simple_test_results(const simple_test_results& r)
 {
     std::ostringstream sout;
     sout << "precision: "<<r.precision << ", recall: "<< r.recall << ", average precision: " << r.average_precision;
-    return sout.str();
-}
-
-// ----------------------------------------------------------------------------------------
-
-long left(const rectangle& r) { return r.left(); }
-long top(const rectangle& r) { return r.top(); }
-long right(const rectangle& r) { return r.right(); }
-long bottom(const rectangle& r) { return r.bottom(); }
-long width(const rectangle& r) { return r.width(); }
-long height(const rectangle& r) { return r.height(); }
-
-string print_rectangle_str(const rectangle& r)
-{
-    std::ostringstream sout;
-    sout << r;
-    return sout.str();
-}
-
-string print_rectangle_repr(const rectangle& r)
-{
-    std::ostringstream sout;
-    sout << "rectangle(" << r.left() << "," << r.top() << "," << r.right() << "," << r.bottom() << ")";
     return sout.str();
 }
 
@@ -153,55 +129,53 @@ inline void find_candidate_object_locations_py (
 void bind_object_detection()
 {
     using boost::python::arg;
-
-    class_<simple_object_detector_training_options>("simple_object_detector_training_options", 
+    {
+    typedef simple_object_detector_training_options type;
+    class_<type>("simple_object_detector_training_options",
         "This object is a container for the options to the train_simple_object_detector() routine.")
-        .add_property("be_verbose", &simple_object_detector_training_options::be_verbose, 
-                                    &simple_object_detector_training_options::be_verbose,
+        .add_property("be_verbose", &type::be_verbose,
+                                    &type::be_verbose,
 "If true, train_simple_object_detector() will print out a lot of information to the screen while training.")
-        .add_property("add_left_right_image_flips", &simple_object_detector_training_options::add_left_right_image_flips, 
-                                                    &simple_object_detector_training_options::add_left_right_image_flips,
+        .add_property("add_left_right_image_flips", &type::add_left_right_image_flips,
+                                                    &type::add_left_right_image_flips,
 "if true, train_simple_object_detector() will assume the objects are \n\
 left/right symmetric and add in left right flips of the training \n\
 images.  This doubles the size of the training dataset.")
-        .add_property("detection_window_size", &simple_object_detector_training_options::detection_window_size,
-                                               &simple_object_detector_training_options::detection_window_size,
+        .add_property("detection_window_size", &type::detection_window_size,
+                                               &type::detection_window_size,
                                                "The sliding window used will have about this many pixels inside it.")
-        .add_property("C", &simple_object_detector_training_options::C,
-                           &simple_object_detector_training_options::C,
+        .add_property("C", &type::C,
+                           &type::C,
 "C is the usual SVM C regularization parameter.  So it is passed to \n\
 structural_object_detection_trainer::set_c().  Larger values of C \n\
 will encourage the trainer to fit the data better but might lead to \n\
 overfitting.  Therefore, you must determine the proper setting of \n\
 this parameter experimentally.")
-        .add_property("epsilon", &simple_object_detector_training_options::epsilon,
-                                 &simple_object_detector_training_options::epsilon,
+        .add_property("epsilon", &type::epsilon,
+                                 &type::epsilon,
 "epsilon is the stopping epsilon.  Smaller values make the trainer's \n\
 solver more accurate but might take longer to train.")
-        .add_property("num_threads", &simple_object_detector_training_options::num_threads,
-                                     &simple_object_detector_training_options::num_threads,
+        .add_property("num_threads", &type::num_threads,
+                                     &type::num_threads,
 "train_simple_object_detector() will use this many threads of \n\
 execution.  Set this to the number of CPU cores on your machine to \n\
-obtain the fastest training speed.");
-
-    class_<simple_test_results>("simple_test_results")
-        .add_property("precision", &simple_test_results::precision)
-        .add_property("recall", &simple_test_results::recall)
-        .add_property("average_precision", &simple_test_results::average_precision)
-        .def("__str__", &::print_simple_test_results);
+obtain the fastest training speed.")
+        .add_property("upsample_limit", &type::upsample_limit,
+                                        &type::upsample_limit,
+"train_simple_object_detector() will upsample images if needed \n\
+no more than upsample_limit times. Value 0 will forbid trainer to \n\
+upsample any images. If trainer is unable to fit all boxes with \n\
+required upsample_limit, exception will be thrown. Higher values \n\
+of upsample_limit exponentially increases memory requiremens. \n\
+Values higher than 2 (default) are not recommended.");
+    }
     {
-    typedef rectangle type;
-    class_<type>("rectangle", "This object represents a rectangular area of an image.")
-        .def(init<long,long,long,long>( (arg("left"),arg("top"),arg("right"),arg("bottom")) ))
-        .def("left",   &::left)
-        .def("top",    &::top)
-        .def("right",  &::right)
-        .def("bottom", &::bottom)
-        .def("width",  &::width)
-        .def("height", &::height)
-        .def("__str__", &::print_rectangle_str)
-        .def("__repr__", &::print_rectangle_repr)
-        .def_pickle(serialize_pickle<type>());
+    typedef simple_test_results type;
+    class_<type>("simple_test_results")
+        .add_property("precision", &type::precision)
+        .add_property("recall", &type::recall)
+        .add_property("average_precision", &type::average_precision)
+        .def("__str__", &::print_simple_test_results);
     }
 
     // Here, kvals is actually the result of linspace(start, end, num) and it is different from kvals used
@@ -354,7 +328,7 @@ ensures \n\
       detector.  If you don't know how many times you want to upsample then \n\
       don't provide a value for upsample_num_times and an appropriate \n\
       default will be used.")
-        .def("run", run_rect_detector, (arg("image"), arg("upsample_num_times")=0),
+        .def("run", run_rect_detector, (arg("image"), arg("upsample_num_times")=0, arg("adjust_threshold")=0.0),
 "requires \n\
     - image is a numpy ndarray containing either an 8bit grayscale or RGB \n\
       image. \n\
@@ -376,7 +350,7 @@ ensures \n\
         .def("__init__", make_constructor(&load_object_from_file<type>),
 "Loads a simple_object_detector from a file that contains the output of the \n\
 train_simple_object_detector() routine.")
-        .def("__call__", &type::run_detector1, (arg("image"), arg("upsample_num_times")),
+        .def("__call__", &type::run_detector1, (arg("image"), arg("upsample_num_times"), arg("adjust_threshold")=0.0),
 "requires \n\
     - image is a numpy ndarray containing either an 8bit grayscale or RGB \n\
       image. \n\
@@ -396,14 +370,6 @@ ensures \n\
     - This function runs the object detector on the input image and returns \n\
       a list of detections.")
         .def("save", save_simple_object_detector_py, (arg("detector_output_filename")), "Save a simple_object_detector to the provided path.")
-        .def_pickle(serialize_pickle<type>());
-    }
-    {
-    typedef std::vector<rectangle> type;
-    class_<type>("rectangles", "An array of rectangle objects.")
-        .def(vector_indexing_suite<type>())
-        .def("clear", &type::clear)
-        .def("resize", resize<type>)
         .def_pickle(serialize_pickle<type>());
     }
 }

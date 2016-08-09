@@ -2,7 +2,10 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8.4)
 
 
+set(USE_SSE4_INSTRUCTIONS ON CACHE BOOL "Use SSE4 instructions")
 include(../../dlib/add_python_module)
+
+add_definitions(-DDLIB_VERSION=${DLIB_VERSION})
 
 # Tell cmake to compile all these cpp files into a dlib python module.
 set(python_srcs
@@ -18,8 +21,10 @@ set(python_srcs
    src/sequence_segmenter.cpp
    src/svm_struct.cpp
    src/image.cpp
+   src/rectangles.cpp
    src/object_detection.cpp
    src/shape_predictor.cpp
+   src/correlation_tracker.cpp
 )
 
 # Only add the GUI module if requested

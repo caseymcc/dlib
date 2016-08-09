@@ -533,10 +533,11 @@ namespace dlib
     {
         /*!
             INITIAL VALUE
-                text() == ""
-                width() == 10
-                height() == a height appropriate for the font used.
-                The text color will be black.
+                - text() == ""
+                - width() == 10
+                - height() == a height appropriate for the font used.  The text color will
+                  be black.
+                - has_input_focus() == false
 
             WHAT THIS OBJECT REPRESENTS
                 This object represents a simple one line text input field.  
@@ -622,7 +623,16 @@ namespace dlib
         );
         /*!
             ensures
-                - gives this text field input keyboard focus
+                - #has_input_focus() == true
+        !*/
+
+        bool has_input_focus (
+        );
+        /*!
+            ensures
+                - Returns true if this txt field has input keyboard focus.  If this
+                  is the case then it means that when the user types on the keyboard
+                  the output will appear inside the text field.
         !*/
 
         void select_all_text (
@@ -2341,8 +2351,9 @@ namespace dlib
                 on the part.  If you want to move any rectangle or an object part then
                 shift+right click and drag it.
                 
-                Finally, if you hold Ctrl and left click an overlay rectangle it will 
-                change its label to get_default_overlay_rect_label().
+                Finally, if you hold Ctrl and left click an overlay rectangle it will
+                change its label to get_default_overlay_rect_label() and color to
+                get_default_overlay_rect_color().
 
                 The image is drawn such that:
                     - the pixel img[0][0] is the upper left corner of the image.

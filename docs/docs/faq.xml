@@ -7,6 +7,27 @@
    <!-- ************************************************************************* -->
    <questions group="General">
 
+      <question text="It doesn't work?">
+         Do not post a question like "I'm using dlib, and it doesn't work?" or
+         "I'm using the object detector and it doesn't work, what do I do?".
+         If this is all you say then I have no idea what is wrong.  99% of the
+         time it's some kind of user error.  1% of the time it's some problem
+         in dlib.  But again, without more information it's impossible to know.
+         So please don't post questions like this.  
+
+         <p>
+         If you think you found some kind of bug or problem in dlib then feel
+         free to submit a dlib issue on <a href="https://github.com/davisking/dlib/issues">github</a>.  
+         But include the version of dlib you are using, what you
+         are trying, what happened, what you expected to have happened instead, etc.
+         </p>
+
+         <p>
+         On the other hand, if you haven't found a bug or problem in dlib, but
+         instead are looking for machine learning/computer vision/programming
+         help then post your question to <a href="http://stackoverflow.com/questions/tagged/dlib">stack overflow with the dlib tag</a>.
+         </p>
+      </question>
 
       <question text="How can I use dlib in Visual Studio?">
          There are instructions on the <a href="compile.html">How to Compile</a> page.  
@@ -144,7 +165,7 @@ row_vect.set_size(5);
          If you can't find something then check the <a href="term_index.html">index</a>.
          <br/><br/>
          Also, the bulk of the documentation can be found by following the 
-         <b><font style='font-size:1.3em' color='#0000FF'>Detailed Documentation</font></b> links.   
+         <more_details/> links.   
       </question>
 
 

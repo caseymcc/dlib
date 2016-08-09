@@ -435,6 +435,9 @@ namespace dlib
         void give_input_focus (
         );
 
+        bool has_input_focus (
+        ) const;
+
         void select_all_text (
         );
 
@@ -3712,6 +3715,12 @@ namespace dlib
             long y
         );
 
+        static bool compare_second (
+            const std::pair<overlay_dot,float>& a,
+            const std::pair<overlay_dot,float>& b
+        ) { return a.second < b.second; }
+
+
         point last;
         std::vector<overlay_line> overlay_lines;
         std::vector<overlay_dot> overlay_dots;
@@ -3720,6 +3729,7 @@ namespace dlib
         vector<double> sum_pts;
         vector<double> max_pts;
         any_function<void(const vector<double>&)> dot_clicked_event_handler;
+        mutable array2d<float> depth;
     };
 
 // ----------------------------------------------------------------------------------------

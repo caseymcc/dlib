@@ -51,7 +51,7 @@ unsigned long full_obj_det_num_parts (const full_object_detection& detection)
 
 point full_obj_det_part (const full_object_detection& detection, const unsigned long idx)
 {
-    if (idx < 0 || idx >= detection.num_parts())
+    if (idx >= detection.num_parts())
     {
         PyErr_SetString(PyExc_IndexError, "Index out of range");
         boost::python::throw_error_already_set();
@@ -210,7 +210,9 @@ void bind_shape_predictors()
                       e.g a padding of 0.5 would cause the algorithm to sample pixels from a box that was 2x2 pixels")
         .add_property("random_seed", &type::random_seed,
                                      &type::random_seed,
-                      "The random seed used by the internal random number generator");
+                      "The random seed used by the internal random number generator")
+        .def("__str__", &::print_shape_predictor_training_options)
+        .def_pickle(serialize_pickle<type>());
     }
     {
     typedef shape_predictor type;
