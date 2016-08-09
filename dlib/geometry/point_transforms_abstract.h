@@ -576,6 +576,16 @@ namespace dlib
                 point_transform_affine3d(identity_matrix<double>(3),delta);
     !*/
 
+    point_transform_affine3d translate_point (
+        double x,
+        double y,
+        double z
+    );
+    /*!
+        ensures
+            - returns translate_point(vector<double>(x,y,z))
+    !*/
+
 // ----------------------------------------------------------------------------------------
 
     class camera_transform
@@ -634,7 +644,8 @@ namespace dlib
 
         dpoint operator() (
             const vector<double>& p,
-            double& scale
+            double& scale,
+            double& distance
         ) const;
         /*!
             ensures
@@ -644,6 +655,9 @@ namespace dlib
                 - #scale == a number that tells you how large things are at the point p.
                   Objects further from the camera appear smaller, in particular, they
                   appear #scale times their normal size.
+                - #distance == how far away the point is from the image plane.  Objects in
+                  front of the camera will have a positive distance and those behind a
+                  negative distance.
         !*/
 
         vector<double> get_camera_pos(
