@@ -40,6 +40,20 @@
 #endif
 
 
+// figure out if the compiler has intializer lists. 
+#if defined(__clang__) 
+#   if __has_feature(cxx_generalized_initializers)
+#       define DLIB_HAS_INITIALIZER_LIST
+#   endif
+#elif defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 2)) && defined(__GXX_EXPERIMENTAL_CXX0X__) 
+#   define DLIB_HAS_INITIALIZER_LIST
+#elif defined(_MSC_VER) && _MSC_VER >= 1800
+#   define DLIB_HAS_INITIALIZER_LIST
+#elif defined(__INTEL_COMPILER) && defined(BOOST_INTEL_STDCXX0X)
+#   define DLIB_HAS_INITIALIZER_LIST
+#endif
+
+
 // figure out if the compiler has static_assert. 
 #if defined(__clang__) 
 #   if __has_feature(cxx_static_assert)

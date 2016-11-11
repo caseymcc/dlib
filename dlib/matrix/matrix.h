@@ -16,7 +16,7 @@
 #include "matrix_assign_fwd.h"
 #include "matrix_op.h"
 #include <utility>
-#ifdef DLIB_HAS_RVALUE_REFERENCES
+#ifdef DLIB_HAS_INITIALIZER_LIST
 #include <initializer_list>
 #endif
 
@@ -1114,7 +1114,7 @@ namespace dlib
             matrix_assign(*this, m);
         }
 
-#ifdef DLIB_HAS_RVALUE_REFERENCES
+#if defined DLIB_HAS_RVALUE_REFERENCES && defined DLIB_HAS_INITIALIZER_LIST
         matrix(const std::initializer_list<T>& l)
         {
             if (NR*NC != 0)
