@@ -34,18 +34,24 @@ endif()
 include(add_global_compiler_switch.cmake)
 
 
-# Make sure ENABLE_ASSERTS is defined for debug builds
-if (NOT CMAKE_CXX_FLAGS_DEBUG MATCHES "-DENABLE_ASSERTS")
-   set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DENABLE_ASSERTS" 
-      CACHE STRING "Flags used by the compiler during C++ debug builds." 
-      FORCE)
-endif ()
+if (DLIB_IN_PROJECT_BUILD)
+    # Make sure ENABLE_ASSERTS is defined for debug builds, but only for uses
+    # who are building an application.  If they are just building dlib as a
+    # stand alone library then don't set this because it will conflict with the
+    # settings in config.h if we did.
+    if (NOT CMAKE_CXX_FLAGS_DEBUG MATCHES "-DENABLE_ASSERTS")
+    set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DENABLE_ASSERTS" 
+        CACHE STRING "Flags used by the compiler during C++ debug builds." 
+        FORCE)
+    endif ()
+endif()
+
 macro (toggle_preprocessor_switch option_name)
-   if (${option_name})
-      add_global_define(${option_name})
-   else()
-      remove_global_define(${option_name})
-   endif()
+if (${option_name})
+    add_global_define(${option_name})
+else()
+    remove_global_define(${option_name})
+endif()
 endmacro()
 
 # Don't try to call add_library(dlib) and setup dlib's stuff if it has already
@@ -94,12 +100,21 @@ if (NOT TARGET dlib)
       set (DLIB_DISABLE_ASSERTS false)
       set (ENABLE_ASSERTS true) 
       add_global_define(ENABLE_ASSERTS)
+      remove_global_define(DLIB_DISABLE_ASSERTS)
    else()
       # Set these variables so they are set in the config.h.in file when dlib
       # is installed.
       set (DLIB_DISABLE_ASSERTS true)
       set (ENABLE_ASSERTS false) 
       remove_global_define(ENABLE_ASSERTS)
+      # Never force the asserts off when doing an in project build.  Instead,
+      # let the debug/release mode setting toggle asserts on or off (or the
+      # DLIB_ENABLE_ASSERTS option obviously).  That is, even if the
+      # DLIB_ENABLE_ASSERTS option is off debug mode can still cause the
+      # asserts to turn on when using an in project build. 
+      if (NOT DLIB_IN_PROJECT_BUILD)
+         add_global_define(DLIB_DISABLE_ASSERTS)
+      endif()
    endif()
 
    if (DLIB_ISO_CPP_ONLY)
@@ -153,10 +168,7 @@ if (NOT TARGET dlib)
    endif()
 
    if (DLIB_ISO_CPP_ONLY)
-       add_library(dlib STATIC ${source_files} )
-       if (UNIX AND NOT DLIB_IN_PROJECT_BUILD)
-           add_library(dlib_shared SHARED ${source_files} )
-       endif()
+       add_library(dlib ${source_files} )
    else()
 
       set(source_files ${source_files}
@@ -297,7 +309,8 @@ if (NOT TARGET dlib)
       endif()
 
       if (DLIB_PNG_SUPPORT)
-         # try to find libpng 
+         # try to find libpng
+         hunter_add_package(PNG)
          find_package(PNG QUIET)
          # Make sure there isn't something wrong with the version of LIBPNG
          # installed on this system.  
@@ -353,7 +366,8 @@ if (NOT TARGET dlib)
       endif()
 
       if (DLIB_JPEG_SUPPORT)
-         # try to find libjpeg 
+         # try to find libjpeg
+         hunter_add_package(Jpeg)
          find_package(JPEG QUIET)
          # Make sure there isn't something wrong with the version of libjpeg 
          # installed on this system.  Also don't use the installed libjpeg
@@ -550,32 +564,21 @@ if (NOT TARGET dlib)
 
 
       # Tell CMake to build dlib via add_library()/cuda_add_library()
-      if (DLIB_USE_CUDA)
-         cuda_add_library(dlib STATIC ${source_files} )
+      if(DLIB_USE_CUDA)
+          cuda_add_library(dlib ${source_files} )
       else()
-         add_library(dlib STATIC ${source_files} )
+          add_library(dlib ${source_files} )
       endif()
       target_link_libraries(dlib ${dlib_needed_libraries} )
-      if (UNIX AND NOT DLIB_IN_PROJECT_BUILD)
-         if (DLIB_USE_CUDA)
-            cuda_add_library(dlib_shared SHARED ${source_files} )
-         else()
-            add_library(dlib_shared SHARED ${source_files} )
-         endif()
-         target_link_libraries(dlib_shared ${dlib_needed_libraries} )
-      endif()
-
    endif ()  ##### end of if NOT DLIB_ISO_CPP_ONLY ##########################################################
 
    # Install the library
-   if (NOT DLIB_IN_PROJECT_BUILD)
+   if(NOT DLIB_IN_PROJECT_BUILD)
        set (LIB_INSTALL_DIR lib CACHE STRING "Install location of libraries (e.g. lib32 or lib64 for multilib installations)")
        cmake_minimum_required(VERSION 2.8.8)
-       if(UNIX)
-           set_target_properties(dlib_shared PROPERTIES
-                                        OUTPUT_NAME dlib 
-                                        VERSION ${VERSION})
-           install(TARGETS dlib dlib_shared
+
+       if(BUILD_SHARED_LIBS)
+           install(TARGETS dlib
                    EXPORT dlib 
                    RUNTIME DESTINATION bin # Windows (including cygwin) considers .dll to be runtime artifacts
                    LIBRARY DESTINATION "${LIB_INSTALL_DIR}"
