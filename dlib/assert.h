@@ -47,7 +47,7 @@
 #   define DLIB_HAS_INITIALIZER_LISTS
 #endif
 
-#if define(__APPLE__) && defined(__GNUC_LIBSTD__) && ((__GNUC_LIBSTD__-0) * 100 + __GNUC_LIBSTD_MINOR__-0 <= 402)
+#if defined(__APPLE__) && defined(__GNUC_LIBSTD__) && ((__GNUC_LIBSTD__-0) * 100 + __GNUC_LIBSTD_MINOR__-0 <= 402)
  // Mac OS X: Apple has not updated libstdc++ since 2007, which means it does not have <initializer_list>
 #   undef DLIB_HAS_INITIALIZER_LISTS
 #endif
