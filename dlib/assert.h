@@ -27,18 +27,30 @@
 #endif
 
 // figure out if the compiler has rvalue references. 
-#if defined(__clang__) 
+#if defined(__clang__)
 #   if __has_feature(cxx_rvalue_references)
 #       define DLIB_HAS_RVALUE_REFERENCES
 #   endif
+#   if __has_feature(cxx_generalized_initializers)
+#       define DLIB_HAS_INITIALIZER_LISTS
+#   endif
 #elif defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 2)) && defined(__GXX_EXPERIMENTAL_CXX0X__) 
+#   define DLIB_HAS_RVALUE_REFERENCES
+#   define DLIB_HAS_INITIALIZER_LISTS
+#elif defined(_MSC_VER) && _MSC_VER >= 1800
+#   define DLIB_HAS_INITIALIZER_LISTS
 #   define DLIB_HAS_RVALUE_REFERENCES
 #elif defined(_MSC_VER) && _MSC_VER >= 1600
 #   define DLIB_HAS_RVALUE_REFERENCES
 #elif defined(__INTEL_COMPILER) && defined(BOOST_INTEL_STDCXX0X)
 #   define DLIB_HAS_RVALUE_REFERENCES
+#   define DLIB_HAS_INITIALIZER_LISTS
 #endif
 
+#if defined(__APPLE__) && defined(__GNUC_LIBSTD__) && ((__GNUC_LIBSTD__-0) * 100 + __GNUC_LIBSTD_MINOR__-0 <= 402)
+ // Apple has not updated libstdc++ in some time and anything under 4.02 does not have <initializer_list> for sure.
+#   undef DLIB_HAS_INITIALIZER_LISTS
+#endif
 
 // figure out if the compiler has static_assert. 
 #if defined(__clang__) 
